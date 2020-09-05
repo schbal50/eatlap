@@ -18,6 +18,8 @@ const menuRouter = require('./routes/Menu');
 app.use('/menu', menuRouter);
 
 
+//Server start 
+
 // REF : .env -be szervevzni 
 PORT = process.env.PORT || 5000
 
