@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const valid = require('validator');
 
 // REF : Add more information
 const UserSchema = new mongoose.Schema({
@@ -8,17 +9,30 @@ const UserSchema = new mongoose.Schema({
         required: true,
         min: 6,
         max: 15,
+        unique: true,
     },
     password: {
         type: String,
         required: true
     },
-    role: {
+    email: {
         type: String,
-        enum: ['user', 'admin'],
-        required: true
+        unique: true,
+        required: true,
+        trim: true,
+        lowercase: true,
+        validate(value) {
+            if (!valid.isEmail(value)) {
+                throw new Error("Email is invalid")
+            }
+        }
+    },
+    is_staff: {
+        type: Boolean
     },
     menu: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MenuItem' }]
+}, {
+    timestamps: true
 });
 
 // Before saving, it hashes the password
