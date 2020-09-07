@@ -8,7 +8,7 @@ app.use(cookieParser())
 app.use(express.json())
 
 // REF : .env & kiszervezni külön fileba & Atlas szervert kellene használni
-mongoose.connect("mongodb://localhost:27017/mernauth", { useNewUrlParser: true, useUnifiedTopology: true }, () => {
+mongoose.connect("mongodb://localhost:27017/mernauth", { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }, () => {
     console.log("Successfully connected to database");
 });
 

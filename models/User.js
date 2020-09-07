@@ -28,7 +28,8 @@ const UserSchema = new mongoose.Schema({
         }
     },
     is_staff: {
-        type: Boolean
+        type: Boolean,
+        default: false
     },
     menu: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MenuItem' }]
 }, {

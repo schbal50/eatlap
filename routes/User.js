@@ -34,17 +34,17 @@ userRouter.post('/register', (req, res) => {
 // session: false = server is not maintaining the session
 userRouter.post('/login', passport.authenticate('local', { session: false }), (req, res) => {
     if (req.isAuthenticated()) {
-        const { _id, username, role } = req.user; // It comes from passport (comparePassword -> return callback ( null, this == which is the user)) 
+        const { _id, username, is_staff } = req.user; // It comes from passport (comparePassword -> return callback ( null, this == which is the user)) 
         // user has signed in sofar
         const token = signToken(_id);
         res.cookie('access_token', token, { httpOnly: true, sameSite: true }); // httpOnly -> ez védi meg a xss-től Samesite: xrs től véd !! 
-        res.status(200).json({ isAuthenticated: true, user: { username, role } });
+        res.status(200).json({ isAuthenticated: true, user: { username, is_staff } });
     }
 });
 
 userRouter.get('/logout', passport.authenticate('jwt', { session: false }), (req, res) => {
     res.clearCookie('access_token');
-    res.json({ user: { username: "", role: "" }, success: true });
+    res.json({ user: { username: "", is_staff: false }, success: true });
 });
 
 userRouter.post('/menuItem', passport.authenticate('jwt', { session: false }), (req, res) => {
@@ -71,7 +71,7 @@ userRouter.get('/menu', passport.authenticate('jwt', { session: false }), (req, 
 });
 
 userRouter.get('/admin', passport.authenticate('jwt', { session: false }), (req, res) => {
-    if (req.user.role === "admin") {
+    if (req.user.is_staff) {
         res.status(200).json({ message: { msgBody: "You are an admin", msgError: false } });
     }
     else res.status(403).json({ message: { msgBody: "You have no permission to this page.", msgError: false } });
@@ -79,8 +79,8 @@ userRouter.get('/admin', passport.authenticate('jwt', { session: false }), (req,
 
 // This is for mainly persistents for the client : Once the browser closed the state gets resets, so this endpoint is to be synced the back and frontend  
 userRouter.get('/authenticated', passport.authenticate('jwt', { session: false }), (req, res) => {
-    const {username, role} = req.user;
-    res.status(200).json({isAuthenticated : true, user : { username, role }});
+    const {username, is_staff} = req.user;
+    res.status(200).json({isAuthenticated : true, user : { username, is_staff }});
 });
 
 module.exports = userRouter;
