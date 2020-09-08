@@ -3,9 +3,13 @@ const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser")
 const mongoose = require("mongoose")
+const helmet = require('helmet') // backend sec
+const morgan = require('morgan');
 
 app.use(cookieParser())
 app.use(express.json())
+app.use(helmet());
+app.use(morgan('common'))
 
 // REF : .env & kiszervezni külön fileba & Atlas szervert kellene használni
 mongoose.connect("mongodb://localhost:27017/mernauth", { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }, () => {
