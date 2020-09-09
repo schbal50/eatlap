@@ -6,6 +6,10 @@ const JWT = require('jsonwebtoken');
 const User = require('../models/User');
 const MenuItem = require('../models/Menu');
 
+const mongodb = require('mongodb')
+const ObjectID = mongodb.ObjectID
+
+
 // REF : async await a routeoknál!! 
 // REF : Az errorokat error middlewarera cserélni 
 // REF : .env
@@ -18,7 +22,7 @@ const signToken = userID => {
 
 userRouter.post('/register', (req, res) => {
     const { username, password, email } = req.body;
-    User.findOne({$or: [{username},{email}]}, (err, user) => {
+    User.findOne({ $or: [{ username }, { email }] }, (err, user) => {
         if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
         if (user) res.status(400).json({ message: { msgBody: "Username or email is already in use.", msgError: true } });
         else {
@@ -70,6 +74,34 @@ userRouter.get('/menu', passport.authenticate('jwt', { session: false }), (req, 
     })
 });
 
+userRouter.delete('/deleteMenuItem/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
+    const menuItemId = req.params.id
+    User.findById({ _id: req.user._id }).populate('menu').exec((err, document) => {
+        if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+        else {
+            // let id = new ObjectID(menuItemId)
+            const found = document.menu.find(itm => String(itm._id) === menuItemId) // asszem átkell alakitani obj-re
+            if (found) {
+                const filteredUserMenuArray = req.user.menu.filter(itm => String(itm) === menuItemId)
+                try {
+                    User.findByIdAndUpdate({ _id: req.user._id }, { menu: filteredUserMenuArray })
+                    MenuItem.findByIdAndDelete({ _id: menuItemId }, (err, doc) => {
+                        if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+                        else {
+                            const filteredPopulatedMenu = document.menu.filter(itm => String(itm._id) !== menuItemId)
+                            res.status(200).json({ menu: filteredPopulatedMenu, authenticated: true, message: { msgBody: "Successfully deleted menu item", msgError: false } });
+                        }
+                    })
+                } catch (error) {
+                    res.status(500).json({ message: { msgBody: "Nemjo", msgError: true } });
+                }
+            } else {
+                res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+            }
+        }
+    })
+})
+
 userRouter.get('/admin', passport.authenticate('jwt', { session: false }), (req, res) => {
     if (req.user.is_staff) {
         res.status(200).json({ message: { msgBody: "You are an admin", msgError: false } });
@@ -79,8 +111,8 @@ userRouter.get('/admin', passport.authenticate('jwt', { session: false }), (req,
 
 // This is for mainly persistents for the client : Once the browser closed the state gets resets, so this endpoint is to be synced the back and frontend  
 userRouter.get('/authenticated', passport.authenticate('jwt', { session: false }), (req, res) => {
-    const {username, is_staff} = req.user;
-    res.status(200).json({isAuthenticated : true, user : { username, is_staff }});
+    const { username, is_staff } = req.user;
+    res.status(200).json({ isAuthenticated: true, user: { username, is_staff } });
 });
 
 module.exports = userRouter;

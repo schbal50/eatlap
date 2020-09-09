@@ -22,7 +22,7 @@ menuRouter.get("/:id", (req, res) => {
             res.status(200).json({ menu: document.menu });
         }
     })
-}) 
+})
 
 
 module.exports = menuRouter;
