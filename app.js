@@ -12,7 +12,7 @@ app.use(helmet());
 app.use(morgan('common'))
 
 // REF : .env & kiszervezni külön fileba & Atlas szervert kellene használni
-mongoose.connect("mongodb://localhost:27017/mernauth", { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }, () => {
+mongoose.connect("mongodb+srv://schbal:W4T17ICGIE1ma2xS@eatlap.ogirp.mongodb.net/eatlap?retryWrites=true&w=majority", { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }, () => {
     console.log("Successfully connected to database");
 });
 
