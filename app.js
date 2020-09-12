@@ -21,7 +21,6 @@ app.use('/user', userRouter);
 const menuRouter = require('./routes/Menu');
 app.use('/menu', menuRouter);
 
-
 //Server start 
 
 // REF : .env -be szervevzni 
