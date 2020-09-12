@@ -84,7 +84,7 @@ userRouter.delete('/deleteMenuItem/:id', passport.authenticate('jwt', { session:
             if (found) {
                 const filteredUserMenuArray = req.user.menu.filter(itm => String(itm) === menuItemId)
                 try {
-                    User.findByIdAndUpdate({ _id: req.user._id }, { menu: filteredUserMenuArray })
+                    User.findByIdAndUpdate({ _id: req.user._id }, { menu: filteredUserMenuArray }, { runValidators: true })
                     MenuItem.findByIdAndDelete({ _id: menuItemId }, (err, doc) => {
                         if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
                         else {
@@ -100,6 +100,27 @@ userRouter.delete('/deleteMenuItem/:id', passport.authenticate('jwt', { session:
             }
         }
     })
+})
+
+userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
+    const element = req.user.menu.find(item => String(item._id) === req.params.id)
+    if (element) {
+        try {
+
+            MenuItem.findByIdAndUpdate(req.params.id, req.body, { runValidators: true, useFindAndModify: false }).then((doc) => {
+                if (!doc) res.status(404).json({ message: { msgBody: "Item not found", msgError: true } });
+                else res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
+            })
+
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+        }
+    }
+    else {
+        res.status(401).json({ message: { msgBody: "Error has occured", msgError: true } });
+    }
+
 })
 
 userRouter.get('/admin', passport.authenticate('jwt', { session: false }), (req, res) => {
