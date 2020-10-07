@@ -109,7 +109,9 @@ userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: fals
 
             MenuItem.findByIdAndUpdate(req.params.id, req.body, { runValidators: true, useFindAndModify: false }).then((doc) => {
                 if (!doc) res.status(404).json({ message: { msgBody: "Item not found", msgError: true } });
-                else res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
+                else {res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
+                console.log(doc);
+            }
             })
 
         } catch (error) {
