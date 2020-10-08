@@ -6,11 +6,13 @@ const JWT = require('jsonwebtoken');
 const User = require('../models/User');
 const MenuItem = require('../models/Menu');
 
+require('dotenv').config();
+
 const signToken = userID => {
     return JWT.sign({
-        iss: "NoobCoder", // issuer - who issued this jwt token
+        iss: process.env.SIGN_TOKEN_ISSUER, // issuer - who issued this jwt token
         sub: userID // who is this token for
-    }, "NoobCoder", { expiresIn: "1h" }) // it must be the same as in authorization secretOrKey so I have to implement it to the .env when refactor 
+    }, process.env.SIGN_TOKEN_ISSUER, { expiresIn: "1h" }) // it must be the same as in authorization secretOrKey so I have to implement it to the .env when refactor 
 }
 
 menuRouter.get("/:id", (req, res) => {
