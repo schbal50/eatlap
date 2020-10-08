@@ -27,6 +27,26 @@ const UserSchema = new mongoose.Schema({
             }
         }
     },
+    name: {
+        type: String,
+        max : [127, "Max Length is 127 characters"],
+    },
+    address: { // 
+        type
+    },
+    phone_numers: {
+        type: [String],
+        default: undefined,
+        validate(value) {
+            if(!valid.isMobilePhone(value, any)){
+                throw new Error("Phone number is invalid")
+            }
+        }
+    },
+    profile_logo: {
+        type: Object,
+        
+    },
     is_staff: {
         type: Boolean,
         default: false

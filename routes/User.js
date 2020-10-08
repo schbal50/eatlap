@@ -51,6 +51,10 @@ userRouter.get('/logout', passport.authenticate('jwt', { session: false }), asyn
     res.json({ user: { username: "", is_staff: false }, success: true });
 });
 
+// REF7 - USER CRUDES
+// USER DATA: username, email, password, is_staff, menu
+// profile_logo, address, phone_numbes, name
+
 userRouter.post('/menuItem', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const menuItem = new MenuItem(req.body);
     await menuItem.save(err => {
