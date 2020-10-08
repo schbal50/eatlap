@@ -20,9 +20,9 @@ const signToken = userID => {
     }, process.env.SIGN_TOKEN_ISSUER, { expiresIn: "1h" }) // it must be the same as in authorization secretOrKey so I have to implement it to the .env when refactor 
 }
 
-userRouter.post('/register', (req, res) => {
+userRouter.post('/register', async (req, res) => {
     const { username, password, email } = req.body;
-    User.findOne({ $or: [{ username }, { email }] }, (err, user) => {
+    await User.findOne({ $or: [{ username }, { email }] }, (err, user) => {
         if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
         if (user) res.status(400).json({ message: { msgBody: "Username or email is already in use.", msgError: true } });
         else {
@@ -36,8 +36,8 @@ userRouter.post('/register', (req, res) => {
 });
 
 // session: false = server is not maintaining the session
-userRouter.post('/login', passport.authenticate('local', { session: false }), (req, res) => {
-    if (req.isAuthenticated()) {
+userRouter.post('/login', passport.authenticate('local', { session: false }), async (req, res) => {
+    if (await req.isAuthenticated()) {
         const { _id, username, is_staff } = req.user; // It comes from passport (comparePassword -> return callback ( null, this == which is the user)) 
         // user has signed in sofar
         const token = signToken(_id);
@@ -46,14 +46,14 @@ userRouter.post('/login', passport.authenticate('local', { session: false }), (r
     }
 });
 
-userRouter.get('/logout', passport.authenticate('jwt', { session: false }), (req, res) => {
+userRouter.get('/logout', passport.authenticate('jwt', { session: false }), async (req, res) => {
     res.clearCookie('access_token');
     res.json({ user: { username: "", is_staff: false }, success: true });
 });
 
-userRouter.post('/menuItem', passport.authenticate('jwt', { session: false }), (req, res) => {
+userRouter.post('/menuItem', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const menuItem = new MenuItem(req.body);
-    menuItem.save(err => {
+    await menuItem.save(err => {
         if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
         else {
             req.user.menu.push(menuItem);
@@ -65,8 +65,8 @@ userRouter.post('/menuItem', passport.authenticate('jwt', { session: false }), (
     })
 });
 
-userRouter.get('/menu', passport.authenticate('jwt', { session: false }), (req, res) => {
-    User.findById({ _id: req.user._id }).populate('menu').exec((err, document) => { // Populate miatt nem csak a primary keyeket teszi át, hanem hozzákapcsolja a rendes menu objektumokat.
+userRouter.get('/menu', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    await User.findById({ _id: req.user._id }).populate('menu').exec((err, document) => { // Populate miatt nem csak a primary keyeket teszi át, hanem hozzákapcsolja a rendes menu objektumokat.
         if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
         else {
             res.status(200).json({ menu: document.menu, authenticated: true }); // authenticated a frontendnek, hogy jelezze h still logged in van
@@ -74,9 +74,9 @@ userRouter.get('/menu', passport.authenticate('jwt', { session: false }), (req, 
     })
 });
 
-userRouter.delete('/deleteMenuItem/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
+userRouter.delete('/deleteMenuItem/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const menuItemId = req.params.id
-    User.findById({ _id: req.user._id }).populate('menu').exec((err, document) => {
+    await User.findById({ _id: req.user._id }).populate('menu').exec((err, document) => {
         if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
         else {
             // let id = new ObjectID(menuItemId)
@@ -102,12 +102,12 @@ userRouter.delete('/deleteMenuItem/:id', passport.authenticate('jwt', { session:
     })
 })
 
-userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
+userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const element = req.user.menu.find(item => String(item._id) === req.params.id)
     if (element) {
         try {
 
-            MenuItem.findByIdAndUpdate(req.params.id, req.body, { runValidators: true, useFindAndModify: false }).then((doc) => {
+            await MenuItem.findByIdAndUpdate(req.params.id, req.body, { runValidators: true, useFindAndModify: false }).then((doc) => {
                 if (!doc) res.status(404).json({ message: { msgBody: "Item not found", msgError: true } });
                 else {res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
                 console.log(doc);
@@ -137,5 +137,11 @@ userRouter.get('/authenticated', passport.authenticate('jwt', { session: false }
     const { username, is_staff } = req.user;
     res.status(200).json({ isAuthenticated: true, user: { username, is_staff } });
 });
+
+// https://blog.risingstack.com/mastering-async-await-in-nodejs/
+process.on('unhandledRejection', (err) => { 
+    console.error(err);
+    process.exit(1);
+})
 
 module.exports = userRouter;

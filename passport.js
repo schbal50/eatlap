@@ -12,7 +12,6 @@ const cookieExtractor = req => {
     return token;
 }
 
-// REF : Key -> .env
 // authorizatin: use it whenever we wanna protect users things (like adding menu)
 passport.use(new JwtStrategy({
     jwtFromRequest : cookieExtractor,

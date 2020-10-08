@@ -15,10 +15,10 @@ const signToken = userID => {
     }, process.env.SIGN_TOKEN_ISSUER, { expiresIn: "1h" }) // it must be the same as in authorization secretOrKey so I have to implement it to the .env when refactor 
 }
 
-menuRouter.get("/:id", (req, res) => {
+menuRouter.get("/:id", async (req, res) => {
     const _id = req.params.id
     console.log(_id)
-    User.findById({ _id: _id }).populate('menu').exec((err, document) => { // Populate miatt nem csak a primary keyeket teszi át, hanem hozzákapcsolja a rendes menu objektumokat.
+    await User.findById({ _id: _id }).populate('menu').exec((err, document) => { // Populate miatt nem csak a primary keyeket teszi át, hanem hozzákapcsolja a rendes menu objektumokat.
         if (err) res.status(404).json({ message: { msgBody: "Error has occured", msgError: true } });
         else {
             res.status(200).json({ menu: document.menu });
