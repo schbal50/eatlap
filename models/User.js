@@ -32,7 +32,7 @@ const UserSchema = new mongoose.Schema({
         max : [127, "Max Length is 127 characters"],
     },
     address: { // 
-        type
+        type:String
     },
     phone_numers: {
         type: [String],
@@ -45,7 +45,7 @@ const UserSchema = new mongoose.Schema({
     },
     profile_logo: {
         type: Object,
-        
+
     },
     is_staff: {
         type: Boolean,
