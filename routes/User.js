@@ -124,6 +124,7 @@ userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: fals
 })
 
 userRouter.patch('/updateUser', passport.authenticate('jwt', { session: false }), async (req, res) => {
+
     const alteredUser = req.body;
     if (alteredUser) {
         try {
@@ -138,6 +139,20 @@ userRouter.patch('/updateUser', passport.authenticate('jwt', { session: false })
         }
     } else {
         res.status(401).json({ message: { msgBody: "Error has occured", msgError: true } });
+    }
+})
+
+userRouter.get('/userDetails', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    console.log(req.user._id);
+    try {
+        const { username, email, name, addresses, phone_numers, profile_logo } = await User.findById(req.user._id)
+        if (username && email) {
+            res.status(200).json({ user: { username, email, name, addresses, phone_numers, profile_logo }, authenticated: true, message: { msgBody: "Success", msgError: false } });
+        } else {
+            res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+        }
+    } catch (error) {
+        res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
     }
 })
 
