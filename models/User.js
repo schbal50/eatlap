@@ -31,9 +31,35 @@ const UserSchema = new mongoose.Schema({
         type: String,
         max : [127, "Max Length is 127 characters"],
     },
-    address: { // 
-        type:String
-    },
+    addresses: [
+        {
+            nickname: {
+                type: String, 
+                min: 6,
+                max : [127, "Max Length is 127 characters"],
+            },
+            country: {
+                type: String,
+                max : [127, "Max Length is 127 characters"],
+            },
+            city : {
+                type: String,
+                max : [127, "Max Length is 127 characters"],
+            },
+            postalCode : {
+                type: String,
+                validate(value) {
+                    if (!valid.isPostalCode(value)) {
+                        throw new Error("Postal code is invalid")
+                    }
+                },
+            },
+            address: {
+                type: String,
+                max : [256, "Max Length is 127 characters"],
+            }
+        }
+    ],
     phone_numers: {
         type: [String],
         default: undefined,
@@ -44,8 +70,7 @@ const UserSchema = new mongoose.Schema({
         }
     },
     profile_logo: {
-        type: Object,
-
+        type: Buffer,
     },
     is_staff: {
         type: Boolean,

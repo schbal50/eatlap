@@ -5,11 +5,12 @@ const passportConfig = require('../passport');
 const JWT = require('jsonwebtoken');
 const User = require('../models/User');
 const MenuItem = require('../models/Menu');
+const mongodb = require('mongodb');
+const multer = require('multer');
+const sharp = require('sharp');
 require('dotenv').config();
-const mongodb = require('mongodb')
+
 const ObjectID = mongodb.ObjectID
-
-
 // REF : async await a routeoknál!! 
 // REF : Az errorokat error middlewarera cserélni 
 // REF : .env
@@ -34,7 +35,6 @@ userRouter.post('/register', async (req, res) => {
         }
     })
 });
-
 // session: false = server is not maintaining the session
 userRouter.post('/login', passport.authenticate('local', { session: false }), async (req, res) => {
     if (await req.isAuthenticated()) {
@@ -50,10 +50,6 @@ userRouter.get('/logout', passport.authenticate('jwt', { session: false }), asyn
     res.clearCookie('access_token');
     res.json({ user: { username: "", is_staff: false }, success: true });
 });
-
-// REF7 - USER CRUDES
-// USER DATA: username, email, password, is_staff, menu
-// profile_logo, address, phone_numbes, name
 
 userRouter.post('/menuItem', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const menuItem = new MenuItem(req.body);
@@ -114,12 +110,10 @@ userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: fals
             await MenuItem.findByIdAndUpdate(req.params.id, req.body, { runValidators: true, useFindAndModify: false }).then((doc) => {
                 if (!doc) res.status(404).json({ message: { msgBody: "Item not found", msgError: true } });
                 else {res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
-                console.log(doc);
             }
             })
 
         } catch (error) {
-            console.log(error)
             res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
         }
     }
@@ -129,19 +123,35 @@ userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: fals
 
 })
 
+userRouter.patch('/updateUser', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const alteredUser = req.body;
+    if (alteredUser) {
+        try {
+            await User.findOneAndUpdate(req.user._id, alteredUser, { runValidators: true, useFindAndModify: false }).then((dec) => {
+                if(!doc) res.status(404).json({ message: { msgBody: "Error has occured.", msgError: true }})
+                else {
+                    res.status(200).json({ message: {msgBody: "User successfully updated", msgError: false }});
+                }
+            })
+        } catch (error) {
+            res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+        }
+    } else {
+        res.status(401).json({ message: { msgBody: "Error has occured", msgError: true } });
+    }
+})
+
 userRouter.get('/admin', passport.authenticate('jwt', { session: false }), (req, res) => {
     if (req.user.is_staff) {
         res.status(200).json({ message: { msgBody: "You are an admin", msgError: false } });
     }
     else res.status(403).json({ message: { msgBody: "You have no permission to this page.", msgError: false } });
 });
-
 // This is for mainly persistents for the client : Once the browser closed the state gets resets, so this endpoint is to be synced the back and frontend  
 userRouter.get('/authenticated', passport.authenticate('jwt', { session: false }), (req, res) => {
     const { username, is_staff } = req.user;
     res.status(200).json({ isAuthenticated: true, user: { username, is_staff } });
 });
-
 // https://blog.risingstack.com/mastering-async-await-in-nodejs/
 process.on('unhandledRejection', (err) => { 
     console.error(err);
