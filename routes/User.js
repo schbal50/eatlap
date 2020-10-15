@@ -8,12 +8,25 @@ const MenuItem = require('../models/Menu');
 const mongodb = require('mongodb');
 const multer = require('multer');
 const sharp = require('sharp');
+const formData = require('express-form-data');
 require('dotenv').config();
 
-const ObjectID = mongodb.ObjectID
-// REF : async await a routeoknál!! 
+
+const upload = multer({
+    limits: {
+        fileSize: 3000000
+    },
+    fileFilter(req, file, cb) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return cb(new Error("Please provied a picture format ( JPG, JPEG, PNG)"))
+        }
+        cb(undefined, true)
+    }
+})
+
+const ObjectID = mongodb.ObjectID;
+
 // REF : Az errorokat error middlewarera cserélni 
-// REF : .env
 const signToken = userID => {
     return JWT.sign({
         iss: process.env.SIGN_TOKEN_ISSUER, // issuer - who issued this jwt token
@@ -109,8 +122,9 @@ userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: fals
 
             await MenuItem.findByIdAndUpdate(req.params.id, req.body, { runValidators: true, useFindAndModify: false }).then((doc) => {
                 if (!doc) res.status(404).json({ message: { msgBody: "Item not found", msgError: true } });
-                else {res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
-            }
+                else {
+                    res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
+                }
             })
 
         } catch (error) {
@@ -129,9 +143,9 @@ userRouter.patch('/updateUser', passport.authenticate('jwt', { session: false })
     if (alteredUser) {
         try {
             await User.findOneAndUpdate(req.user._id, alteredUser, { runValidators: true, useFindAndModify: false }).then((dec) => {
-                if(!doc) res.status(404).json({ message: { msgBody: "Error has occured.", msgError: true }})
+                if (!doc) res.status(404).json({ message: { msgBody: "Error has occured.", msgError: true } })
                 else {
-                    res.status(200).json({ message: {msgBody: "User successfully updated", msgError: false }});
+                    res.status(200).json({ message: { msgBody: "User successfully updated", msgError: false } });
                 }
             })
         } catch (error) {
@@ -143,17 +157,36 @@ userRouter.patch('/updateUser', passport.authenticate('jwt', { session: false })
 })
 
 userRouter.get('/userDetails', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    console.log(req.user._id);
+
     try {
-        const { username, email, name, addresses, phone_numers, profile_logo } = await User.findById(req.user._id)
+        const { username, email, name, addresses, phone_numers, avatar } = await User.findById(req.user._id)
         if (username && email) {
-            res.status(200).json({ user: { username, email, name, addresses, phone_numers, profile_logo }, authenticated: true, message: { msgBody: "Success", msgError: false } });
+            res.status(200).json({ user: { username, email, name, addresses, phone_numers, avatar }, authenticated: true, message: { msgBody: "Success", msgError: false } });
         } else {
             res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
         }
     } catch (error) {
         res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
     }
+})
+
+userRouter.post('/logo', passport.authenticate('jwt', { session: false }) ,upload.single('avatar'), async (req, res) => {
+    console.log(req.file.buffer)
+    try {
+        req.user.avatar = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer();
+        console.log(req.user.avatar)
+        await req.user.save();
+        res.send()
+    } catch (error) {
+        res.status(500).send(error)
+    }
+   
+    // const logo = await sharp(req.files).resize({ width: 250, height: 250 }).png()
+    // await User.findByIdAndUpdate(req.user._id, { profile_logo: logo }, { runValidators: true, useFindAndModify: false }).then((doc) => {
+    //     if (!doc) res.status(404).json({ message: { msgBody: "Item not found", msgError: true } })
+    //     else { res.status(200).json({ message: { msgBody: "Successfiééy added logo", msgError: false } }) }
+    // }
+    // )
 })
 
 userRouter.get('/admin', passport.authenticate('jwt', { session: false }), (req, res) => {
@@ -168,7 +201,7 @@ userRouter.get('/authenticated', passport.authenticate('jwt', { session: false }
     res.status(200).json({ isAuthenticated: true, user: { username, is_staff } });
 });
 // https://blog.risingstack.com/mastering-async-await-in-nodejs/
-process.on('unhandledRejection', (err) => { 
+process.on('unhandledRejection', (err) => {
     console.error(err);
     process.exit(1);
 })

@@ -8,7 +8,7 @@ require('dotenv').config();
 
 app.use(cookieParser())
 app.use(express.json())
-app.use(helmet());
+//app.use(helmet());
 app.use(morgan('common'))
 
 mongoose.connect(process.env.DB_HOST, { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }, () => {

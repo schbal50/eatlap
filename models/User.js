@@ -69,7 +69,7 @@ const UserSchema = new mongoose.Schema({
             }
         }
     },
-    profile_logo: {
+    avatar: {
         type: Buffer,
     },
     is_staff: {
