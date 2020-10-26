@@ -20,6 +20,9 @@ const menuSchema = new mongoose.Schema({
     categories : {
         type: [String],
         default: undefined
+    },
+    picture : {
+        type: Buffer,
     }
 })
 

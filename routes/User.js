@@ -24,6 +24,8 @@ const upload = multer({
     }
 })
 
+const uploadWithData = multer();
+
 const ObjectID = mongodb.ObjectID;
 
 // REF : Az errorokat error middlewarera cserélni 
@@ -64,18 +66,23 @@ userRouter.get('/logout', passport.authenticate('jwt', { session: false }), asyn
     res.json({ user: { username: "", is_staff: false }, success: true });
 });
 
-userRouter.post('/menuItem', passport.authenticate('jwt', { session: false }), async (req, res) => {
+userRouter.post('/menuItem', passport.authenticate('jwt', { session: false }), upload.single('picture') ,async (req, res) => {
     const menuItem = new MenuItem(req.body);
-    await menuItem.save(err => {
-        if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
-        else {
-            req.user.menu.push(menuItem);
-            req.user.save(err => {
-                if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
-                else res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
-            });
-        }
-    })
+
+    if(req.file) {
+        menuItem.picture = await sharp(req.file.buffer).resize({ width: 100, height: 100 }).png().toBuffer();
+    }
+
+     await menuItem.save(err => {
+         if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+         else {
+             req.user.menu.push(menuItem);
+             req.user.save(err => {
+                 if (err) res.status(500).json({ message: { msgBody: "Error has occured", msgError: true } });
+                 else res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
+             });
+         }
+     })
 });
 
 userRouter.get('/menu', passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -137,6 +144,21 @@ userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: fals
 
 })
 
+userRouter.post('/updateItemPicture/:id', passport.authenticate('jwt', { session: false }), upload.single('picture'), async (req, res) => {
+    const element = req.user.menu.find(item => String(item._id) === req.params.id);
+    if (element) {
+        try {
+            const picture = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer();
+            await MenuItem.findByIdAndUpdate(element._id, {picture: picture}, { runValidators: true, useFindAndModify: false })
+            res.send(); 
+        } catch (error) {
+            res.status(500).send(error)
+        }
+    } else {
+        res.send(404).send();
+    }
+})
+
 userRouter.patch('/updateUser', passport.authenticate('jwt', { session: false }), async (req, res) => {
 
     const alteredUser = req.body;
@@ -171,9 +193,8 @@ userRouter.get('/userDetails', passport.authenticate('jwt', { session: false }),
 })
 
 userRouter.post('/logo', passport.authenticate('jwt', { session: false }) ,upload.single('avatar'), async (req, res) => {
-    console.log(req.file.buffer)
     try {
-        req.user.avatar = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer();
+        req.user.avatar = await sharp(req.file.buffer).resize({ width: 100, height: 100 }).png().toBuffer();
         console.log(req.user.avatar)
         await req.user.save();
         res.send()
