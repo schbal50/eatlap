@@ -122,12 +122,15 @@ userRouter.delete('/deleteMenuItem/:id', passport.authenticate('jwt', { session:
     })
 })
 
-userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+userRouter.patch('/updateItem/:id', passport.authenticate('jwt', { session: false }), upload.single('picture'), async (req, res) => {
     const element = req.user.menu.find(item => String(item._id) === req.params.id)
     if (element) {
         try {
-
-            await MenuItem.findByIdAndUpdate(req.params.id, req.body, { runValidators: true, useFindAndModify: false }).then((doc) => {
+            const newItem = new MenuItem(req.body);
+            if (req.file) {
+                newItem.picture = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer();
+            }
+            await MenuItem.findByIdAndUpdate(req.params.id, {name: req.body.name, description: req.body.description, categories: req.body.categories, price: req.body.price, picture: newItem.picture}, { runValidators: true, useFindAndModify: false }).then((doc) => {
                 if (!doc) res.status(404).json({ message: { msgBody: "Item not found", msgError: true } });
                 else {
                     res.status(200).json({ message: { msgBody: "Successfully added menu", msgError: false } });
